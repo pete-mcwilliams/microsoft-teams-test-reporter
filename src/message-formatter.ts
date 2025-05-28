@@ -257,7 +257,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
   return {
     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
     "type": "AdaptiveCard",
-    "version": "1.4",
+    "version": "1.5",
     "body": [
       {
         "type": "TextBlock",

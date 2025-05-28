@@ -230,3 +230,60 @@ export const formatFailedTestsMessage = (ctrf: CtrfReport): string => {
     const message = failedTests.map(test => `Test: ${test.name}\nMessage: ${test.message}\n`).join('\n');
     return `Failed Tests:\n${message}`;
 };
+
+export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
+  const { summary, environment } = ctrf.results;
+  const passedTests = summary.passed;
+  const failedTests = summary.failed;
+  const skippedTests = summary.skipped;
+  const pendingTests = summary.pending;
+  const otherTests = summary.other;
+
+  let buildInfo = "No build information provided";
+  if (environment) {
+    const { buildName, buildNumber, buildUrl } = environment;
+    if (buildName && buildNumber) {
+      buildInfo = buildUrl ? `[${buildName} #${buildNumber}](${buildUrl})` : `${buildName} #${buildNumber}`;
+    } else if (buildName || buildNumber) {
+      buildInfo = `${buildName || ''} ${buildNumber || ''}`;
+    }
+  }
+
+  const durationInSeconds = (summary.stop - summary.start) / 1000;
+  const durationText = durationInSeconds < 1
+    ? "<1s"
+    : `${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
+
+  return {
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.4",
+    "body": [
+      {
+        "type": "TextBlock",
+        "size": "Large",
+        "weight": "Bolder",
+        "text": "CTRF Test Results"
+      },
+      {
+        "type": "FactSet",
+        "facts": [
+          { "title": "Passed", "value": String(passedTests) },
+          { "title": "Failed", "value": String(failedTests) },
+          { "title": "Skipped", "value": String(skippedTests) },
+          { "title": "Pending", "value": String(pendingTests) },
+          { "title": "Other", "value": String(otherTests) },
+          { "title": "Duration", "value": durationText },
+          { "title": "Build", "value": buildInfo }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "Action.OpenUrl",
+        "title": "CTRF Plugin",
+        "url": "https://github.com/ctrf-io/teams-ctrf"
+      }
+    ]
+  };
+};

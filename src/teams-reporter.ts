@@ -6,7 +6,8 @@ import { CtrfReport } from '../types/ctrf';
 export async function sendTestResultsToTeams(
     report: CtrfReport,
     options: Options = {},
-    logs: boolean = false
+    logs: boolean = false,
+    useAdaptiveCard: boolean = false
 ): Promise<void> {
     if (options.token) {
         process.env.TEAMS_WEBHOOK_URL = options.token;
@@ -17,7 +18,9 @@ export async function sendTestResultsToTeams(
         return;
     }
 
-    const message = formatResultsMessage(report);
+    const message = useAdaptiveCard
+        ? require('./message-formatter').formatResultsAdaptiveCard(report)
+        : formatResultsMessage(report);
 
     await sendTeamsMessage(message);
     logs && console.log('Test results message sent to Teams.');

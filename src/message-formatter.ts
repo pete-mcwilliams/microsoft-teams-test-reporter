@@ -239,13 +239,21 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
   const pendingTests = summary.pending;
   const otherTests = summary.other;
 
-  let buildInfo = "No build information provided";
+  let appTitle = "CTRF";
+  let buildInfo = null;
+  let buildTitle = "Build Info";
   if (environment) {
-    const { buildName, buildNumber, buildUrl } = environment;
+    const { appName, buildName, buildNumber, buildUrl } = environment;
+    if (appName) {
+      appTitle = appName;
+    }
     if (buildName && buildNumber) {
-      buildInfo = buildUrl ? `[${buildName} #${buildNumber}](${buildUrl})` : `${buildName} #${buildNumber}`;
+      buildTitle = `${buildName} #${buildNumber}`;
     } else if (buildName || buildNumber) {
-      buildInfo = `${buildName || ''} ${buildNumber || ''}`;
+      buildTitle = `${buildName || ''}${buildNumber || ''}`;
+    }
+    if (buildUrl) {
+      buildInfo = buildUrl;
     }
   }
 
@@ -255,34 +263,41 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
     : `${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
 
   return {
-    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-    "type": "AdaptiveCard",
-    "version": "1.5",
-    "body": [
+    "type": "message",
+    "attachments": [
       {
-        "type": "TextBlock",
-        "size": "Large",
-        "weight": "Bolder",
-        "text": "CTRF Test Results"
-      },
-      {
-        "type": "FactSet",
-        "facts": [
-          { "title": "Passed", "value": String(passedTests) },
-          { "title": "Failed", "value": String(failedTests) },
-          { "title": "Skipped", "value": String(skippedTests) },
-          { "title": "Pending", "value": String(pendingTests) },
-          { "title": "Other", "value": String(otherTests) },
-          { "title": "Duration", "value": durationText },
-          { "title": "Build", "value": buildInfo }
-        ]
-      }
-    ],
-    "actions": [
-      {
-        "type": "Action.OpenUrl",
-        "title": "CTRF Plugin",
-        "url": "https://github.com/ctrf-io/teams-ctrf"
+        "contentType": "application/vnd.microsoft.card.adaptive",
+        "content": {
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          "type": "AdaptiveCard",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "size": "Large",
+              "weight": "Bolder",
+              "text": `${appTitle} Test Results`
+            },
+            {
+              "type": "FactSet",
+              "facts": [
+                { "title": "Passed", "value": String(passedTests) },
+                { "title": "Failed", "value": String(failedTests) },
+                { "title": "Skipped", "value": String(skippedTests) },
+                { "title": "Pending", "value": String(pendingTests) },
+                { "title": "Other", "value": String(otherTests) },
+                { "title": "Duration", "value": durationText }
+              ]
+            }
+          ],
+          "actions": buildInfo ? [
+            {
+              "type": "Action.OpenUrl",
+              "title": buildTitle,
+              "url": buildInfo
+            }
+          ] : []
+        }
       }
     ]
   };

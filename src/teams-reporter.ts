@@ -1,4 +1,4 @@
-import { formatResultsMessage, formatFlakyTestsMessage, formatAiSummaryForTest, } from './message-formatter';
+import { formatResultsMessage, formatFlakyTestsMessage, formatAiSummaryForTest, formatResultsAdaptiveCard } from './message-formatter';
 import { sendTeamsMessage } from './teams-notify';
 import { Options } from '../types/reporter';
 import { CtrfReport } from '../types/ctrf';
@@ -6,8 +6,7 @@ import { CtrfReport } from '../types/ctrf';
 export async function sendTestResultsToTeams(
     report: CtrfReport,
     options: Options = {},
-    logs: boolean = false,
-    useAdaptiveCard: boolean = false
+    logs: boolean = false
 ): Promise<void> {
     if (options.token) {
         process.env.TEAMS_WEBHOOK_URL = options.token;
@@ -18,8 +17,8 @@ export async function sendTestResultsToTeams(
         return;
     }
 
-    const message = useAdaptiveCard
-        ? require('./message-formatter').formatResultsAdaptiveCard(report)
+    const message = options.useAdaptiveCard
+        ? formatResultsAdaptiveCard(report)
         : formatResultsMessage(report);
 
     await sendTeamsMessage(message);

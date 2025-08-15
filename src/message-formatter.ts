@@ -230,3 +230,75 @@ export const formatFailedTestsMessage = (ctrf: CtrfReport): string => {
     const message = failedTests.map(test => `Test: ${test.name}\nMessage: ${test.message}\n`).join('\n');
     return `Failed Tests:\n${message}`;
 };
+
+export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
+  const { summary, environment } = ctrf.results;
+  const passedTests = summary.passed;
+  const failedTests = summary.failed;
+  const skippedTests = summary.skipped;
+  const pendingTests = summary.pending;
+  const otherTests = summary.other;
+
+  let appTitle = "CTRF";
+  let buildInfo = null;
+  let buildTitle = "Build Info";
+  if (environment) {
+    const { appName, buildName, buildNumber, buildUrl } = environment;
+    if (appName) {
+      appTitle = appName;
+    }
+    if (buildName && buildNumber) {
+      buildTitle = `${buildName} #${buildNumber}`;
+    } else if (buildName || buildNumber) {
+      buildTitle = `${buildName || ''}${buildNumber || ''}`;
+    }
+    if (buildUrl) {
+      buildInfo = buildUrl;
+    }
+  }
+
+  const durationInSeconds = (summary.stop - summary.start) / 1000;
+  const durationText = durationInSeconds < 1
+    ? "<1s"
+    : `${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
+
+  return {
+    "type": "message",
+    "attachments": [
+      {
+        "contentType": "application/vnd.microsoft.card.adaptive",
+        "content": {
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          "type": "AdaptiveCard",
+          "version": "1.5",
+          "body": [
+            {
+              "type": "TextBlock",
+              "size": "Large",
+              "weight": "Bolder",
+              "text": `${appTitle} Test Results`
+            },
+            {
+              "type": "FactSet",
+              "facts": [
+                { "title": "Passed", "value": String(passedTests) },
+                { "title": "Failed", "value": String(failedTests) },
+                { "title": "Skipped", "value": String(skippedTests) },
+                { "title": "Pending", "value": String(pendingTests) },
+                { "title": "Other", "value": String(otherTests) },
+                { "title": "Duration", "value": durationText }
+              ]
+            }
+          ],
+          "actions": buildInfo ? [
+            {
+              "type": "Action.OpenUrl",
+              "title": buildTitle,
+              "url": buildInfo
+            }
+          ] : []
+        }
+      }
+    ]
+  };
+};

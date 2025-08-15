@@ -27,7 +27,7 @@ export const sendTeamsMessage = (message: object): Promise<void> => {
                 response += chunk;
             });
             res.on('end', () => {
-                if (res.statusCode === 200) {
+                if (res.statusCode === 200 || res.statusCode === 202) {
                     resolve();
                 } else {
                     reject(new Error(`Failed to send message, status code: ${res.statusCode}, response: ${response}`));

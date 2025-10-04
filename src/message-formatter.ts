@@ -1,5 +1,16 @@
 import { CtrfReport, CtrfEnvironment, CtrfTest } from '../types/ctrf';
 
+const resultText = (failedTests: number): string => {
+  return failedTests > 0 ? `${failedTests} failed tests` : `Passed`;
+};
+
+const duration = (start: number, stop: number): string => {
+  const durationInSeconds = (stop - start) / 1000;
+  return durationInSeconds < 1
+    ? '<1s'
+    : `${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
+};
+
 export const formatResultsMessage = (ctrf: CtrfReport, failOnly: boolean = false): object => {
   const { summary, environment } = ctrf.results;
   const passedTests = summary.passed;
@@ -8,7 +19,7 @@ export const formatResultsMessage = (ctrf: CtrfReport, failOnly: boolean = false
   const pendingTests = summary.pending;
   const otherTests = summary.other;
 
-  let title = "CTRF Test Results";
+  let title = 'CTRF Test Results';
   let missingEnvProperties: string[] = [];
 
   let buildInfo = "No build information provided";
@@ -37,14 +48,6 @@ export const formatResultsMessage = (ctrf: CtrfReport, failOnly: boolean = false
   }
 
   const color = failedTests > 0 ? 'FF0000' : '36a64f';
-  const resultText = failedTests > 0
-    ? `${failedTests} failed tests`
-    : `Passed`;
-
-  const durationInSeconds = (summary.stop - summary.start) / 1000;
-  const durationText = durationInSeconds < 1
-    ? "*Duration:* <1s"
-    : `*Duration:* ${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
 
   const testSummary = `&#x2705; ${passedTests} | &#x274C; ${failedTests} | &#x23E9; ${skippedTests} | &#x23F3; ${pendingTests} | &#x2753; ${otherTests}`;
 
@@ -53,8 +56,8 @@ export const formatResultsMessage = (ctrf: CtrfReport, failOnly: boolean = false
       activityTitle: title,
       facts: [
         { name: "Test Summary", value: testSummary },
-        { name: "Results", value: resultText },
-        { name: "Duration", value: durationText },
+        { name: "Results", value: resultText(failedTests) },
+        { name: "Duration", value: `*Duration:* ${duration(summary.start, summary.stop)}` },
         { name: "Build", value: buildInfo }
       ],
       markdown: true
@@ -257,46 +260,256 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
     }
   }
 
-  const durationInSeconds = (summary.stop - summary.start) / 1000;
-  const durationText = durationInSeconds < 1
-    ? "<1s"
-    : `${new Date(durationInSeconds * 1000).toISOString().substr(11, 8)}`;
+  const testStatusMapping: Record<
+    'passed' | 'failed' | 'skipped' | 'pending' | 'other',
+    { emoji: string; style: string }
+  > = {
+    passed: { emoji: `✅`, style: 'good' },
+    failed: { emoji: `❌`, style: 'attention' },
+    skipped: { emoji: `⏩️`, style: 'accent' },
+    pending: { emoji: `⌛`, style: 'neutral' },
+    other: { emoji: `❓️`, style: 'warning' }
+  };
+
+  let titleStatus: 'passed' | 'failed' | 'skipped' | 'pending' | 'other' =
+    'passed';
+
+  if (failedTests > 0) {
+    titleStatus = 'failed';
+  }
 
   return {
-    "type": "message",
-    "attachments": [
+    type: 'message',
+    attachments: [
       {
-        "contentType": "application/vnd.microsoft.card.adaptive",
-        "content": {
-          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-          "type": "AdaptiveCard",
-          "version": "1.5",
-          "body": [
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.5',
+          body: [
             {
-              "type": "TextBlock",
-              "size": "Large",
-              "weight": "Bolder",
-              "text": `${appTitle} Test Results`
+              type: 'Container',
+              items: [
+                {
+                  type: 'TextBlock',
+                  size: 'Large',
+                  weight: 'Bolder',
+                  text: `${testStatusMapping[titleStatus].emoji}  ${appTitle} Test Results`,
+                  wrap: true
+                }
+              ],
+              style: testStatusMapping[titleStatus].style,
+              bleed: true
             },
             {
-              "type": "FactSet",
-              "facts": [
-                { "title": "Passed", "value": String(passedTests) },
-                { "title": "Failed", "value": String(failedTests) },
-                { "title": "Skipped", "value": String(skippedTests) },
-                { "title": "Pending", "value": String(pendingTests) },
-                { "title": "Other", "value": String(otherTests) },
-                { "title": "Duration", "value": durationText }
+              type: 'ColumnSet',
+              columns: [
+                {
+                  type: 'Column',
+                  width: '100px',
+                  items: [
+                    {
+                      title: 'Summary',
+                      data: [
+                        {
+                          legend: 'Passed',
+                          color: testStatusMapping['passed'].style,
+                          value: passedTests
+                        },
+                        {
+                          legend: 'Failed',
+                          color: testStatusMapping['failed'].style,
+                          value: failedTests
+                        },
+                        {
+                          legend: 'Skipped',
+                          color: testStatusMapping['skipped'].style,
+                          value: skippedTests
+                        },
+                        {
+                          legend: 'Pending',
+                          color: testStatusMapping['pending'].style,
+                          value: pendingTests
+                        },
+                        {
+                          legend: 'Other',
+                          color: testStatusMapping['other'].style,
+                          value: otherTests
+                        }
+                      ],
+                      type: 'Chart.Donut'
+                    }
+                  ]
+                },
+                {
+                  type: 'Column',
+                  width: 'stretch',
+                  verticalContentAlignment: 'center',
+                  items: [
+                    {
+                      type: 'ColumnSet',
+                      columns: [
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `Summary:`,
+                              weight: 'Bolder'
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${
+                                testStatusMapping['passed'].emoji
+                              } ${String(passedTests)}`,
+                              color: testStatusMapping['passed'].style,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${
+                                testStatusMapping['failed'].emoji
+                              } ${String(failedTests)}`,
+                              color: testStatusMapping['failed'].style,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${
+                                testStatusMapping['skipped'].emoji
+                              } ${String(skippedTests)}`,
+                              color: testStatusMapping['skipped'].style,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${
+                                testStatusMapping['pending'].emoji
+                              } ${String(pendingTests)}`,
+                              color: testStatusMapping['pending'].style,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${
+                                testStatusMapping['other'].emoji
+                              } ${String(otherTests)}`,
+                              color: testStatusMapping['other'].style,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      type: 'ColumnSet',
+                      columns: [
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: 'Results:',
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${resultText(failedTests)}`,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      type: 'ColumnSet',
+                      columns: [
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: 'Duration:',
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        },
+                        {
+                          type: 'Column',
+                          width: 'automatic',
+                          items: [
+                            {
+                              type: 'TextBlock',
+                              text: `${duration(summary.start, summary.stop)}`,
+                              weight: 'Bolder',
+                              wrap: true
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
               ]
             }
           ],
-          "actions": buildInfo ? [
-            {
-              "type": "Action.OpenUrl",
-              "title": buildTitle,
-              "url": buildInfo
-            }
-          ] : []
+          actions: buildInfo
+            ? [
+                {
+                  type: 'Action.OpenUrl',
+                  title: buildTitle,
+                  url: buildInfo
+                }
+              ]
+            : []
         }
       }
     ]

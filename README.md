@@ -70,6 +70,16 @@ npx teams-ctrf results /path/to/ctrf-report.json
 
 ![Results view](assets/results.png)
 
+Or send adaptive cards to teams with the --useAdaptiveCard option:
+
+```sh
+npx teams-ctrf results /path/to/ctrf-report.json --useAdaptiveCard
+```
+
+![Passed adaptive card](assets/adaptive-card-passed.png)
+
+![Failed adaptive card](assets/adaptive-card-failed.png)
+
 To send flaky test report to Teams:
 
 ```sh

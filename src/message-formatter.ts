@@ -262,13 +262,13 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
 
   const testStatusMapping: Record<
     'passed' | 'failed' | 'skipped' | 'pending' | 'other',
-    { emoji: string; style: string }
+    { emoji: string; chartColor: string; textColor: string }
   > = {
-    passed: { emoji: `✅`, style: 'good' },
-    failed: { emoji: `❌`, style: 'attention' },
-    skipped: { emoji: `⏩️`, style: 'accent' },
-    pending: { emoji: `⌛`, style: 'neutral' },
-    other: { emoji: `❓️`, style: 'warning' }
+    passed: { emoji: `✅`, chartColor: 'good', textColor: 'good' },
+    failed: { emoji: `❌`, chartColor: 'attention', textColor: 'attention' },
+    skipped: { emoji: `⏩️`, chartColor: 'divergingCyan', textColor: 'accent'},
+    pending: { emoji: `⌛`, chartColor: 'neutral', textColor: 'default' },
+    other: { emoji: `❓️`, chartColor: 'warning', textColor: 'warning' }
   };
 
   let titleStatus: 'passed' | 'failed' | 'skipped' | 'pending' | 'other' =
@@ -287,6 +287,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
           "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
           "type": "AdaptiveCard",
           "version": "1.5",
+          "speak": `${appTitle} Test Results. ${resultText(failedTests)} in ${duration(summary.start, summary.stop)}`,
           "body": [
             {
               "type": "Container",
@@ -299,7 +300,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                   "wrap": true
                 }
               ],
-              "style": testStatusMapping[titleStatus].style,
+              "style": testStatusMapping[titleStatus].textColor,
               "bleed": true
             },
             {
@@ -314,27 +315,27 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                       "data": [
                         {
                           "legend": "Passed",
-                          "color": testStatusMapping['passed'].style,
+                          "color": testStatusMapping['passed'].chartColor,
                           "value": passedTests
                         },
                         {
                           "legend": "Failed",
-                          "color": testStatusMapping['failed'].style,
+                          "color": testStatusMapping['failed'].chartColor,
                           "value": failedTests
                         },
                         {
                           "legend": "Skipped",
-                          "color": testStatusMapping['skipped'].style,
+                          "color": testStatusMapping['skipped'].chartColor,
                           "value": skippedTests
                         },
                         {
                           "legend": "Pending",
-                          "color": testStatusMapping['pending'].style,
+                          "color": testStatusMapping['pending'].chartColor,
                           "value": pendingTests
                         },
                         {
                           "legend": "Other",
-                          "color": testStatusMapping['other'].style,
+                          "color": testStatusMapping['other'].chartColor,
                           "value": otherTests
                         }
                       ],
@@ -352,7 +353,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                       "columns": [
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
@@ -363,14 +364,14 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
                               "text": `${
                                 testStatusMapping['passed'].emoji
                               } ${String(passedTests)}`,
-                              "color": testStatusMapping['passed'].style,
+                              "color": testStatusMapping['passed'].textColor,
                               "weight": "Bolder",
                               "wrap": true
                             }
@@ -378,14 +379,14 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
                               "text": `${
                                 testStatusMapping['failed'].emoji
                               } ${String(failedTests)}`,
-                              "color": testStatusMapping['failed'].style,
+                              "color": testStatusMapping['failed'].textColor,
                               "weight": "Bolder",
                               "wrap": true
                             }
@@ -393,14 +394,14 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
                               "text": `${
                                 testStatusMapping['skipped'].emoji
                               } ${String(skippedTests)}`,
-                              "color": testStatusMapping['skipped'].style,
+                              "color": testStatusMapping['skipped'].textColor,
                               "weight": "Bolder",
                               "wrap": true
                             }
@@ -408,14 +409,14 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
                               "text": `${
                                 testStatusMapping['pending'].emoji
                               } ${String(pendingTests)}`,
-                              "color": testStatusMapping['pending'].style,
+                              "color": testStatusMapping['pending'].textColor,
                               "weight": "Bolder",
                               "wrap": true
                             }
@@ -423,14 +424,14 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
                               "text": `${
                                 testStatusMapping['other'].emoji
                               } ${String(otherTests)}`,
-                              "color": testStatusMapping['other'].style,
+                              "color": testStatusMapping['other'].textColor,
                               "weight": "Bolder",
                               "wrap": true
                             }
@@ -443,7 +444,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                       "columns": [
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
@@ -455,7 +456,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
@@ -472,7 +473,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                       "columns": [
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",
@@ -484,7 +485,7 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
                         },
                         {
                           "type": "Column",
-                          "width": "automatic",
+                          "width": "auto",
                           "items": [
                             {
                               "type": "TextBlock",

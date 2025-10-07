@@ -288,6 +288,9 @@ export const formatResultsAdaptiveCard = (ctrf: CtrfReport): object => {
           "type": "AdaptiveCard",
           "version": "1.5",
           "speak": `${appTitle} Test Results. ${resultText(failedTests)} in ${duration(summary.start, summary.stop)}`,
+          "msteams": {  
+            "width": "Full"  
+          }, 
           "body": [
             {
               "type": "Container",
